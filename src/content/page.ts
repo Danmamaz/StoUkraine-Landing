@@ -115,10 +115,15 @@ export const leadForm: LeadFormContent = {
   requiredHint: "Поля, позначені *, обов'язкові.",
   optionalHint: "(необов'язково)",
   fields: {
-    name: { label: "Ім'я", error: "Вкажіть ваше ім'я" },
+    firstName: { label: "Ім'я", error: "Вкажіть ваше ім'я" },
+    lastName: { label: "Прізвище", error: "Вкажіть ваше прізвище" },
     phone: { label: "Номер телефону", placeholder: "+380 __ ___ __ __", error: "Вкажіть номер у форматі +380 XX XXX XX XX" },
     email: { label: "Пошта", error: "Перевірте адресу пошти" },
     product: { label: "Продукція", emptyOption: "— Не обрано —" },
+    objectType: {
+      label: "Сфера / Тип об'єкта",
+      options: ["Приватний будинок", "Багатоквартирний будинок", "Комерційна будівля", "Громадська будівля", "Реконструкція фасаду", "Інше"],
+    },
     notes: { label: "Примітки", placeholder: "Напишіть, що вас цікавить" },
   },
   submitLabel: "Надіслати",

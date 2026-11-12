@@ -1,8 +1,10 @@
 export type LeadPayload = {
-  name: string;
+  firstName: string;
+  lastName: string;
   phone: string;
   email?: string;
   product?: string;
+  objectTypes?: string[];
   notes?: string;
   /** Honeypot - real people leave it empty */
   website?: string;

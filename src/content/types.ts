@@ -140,10 +140,13 @@ export type LeadFormContent = {
   requiredHint: string;
   optionalHint: string;
   fields: {
-    name: { label: string; error: string };
+    firstName: { label: string; error: string };
+    lastName: { label: string; error: string };
     phone: { label: string; placeholder: string; error: string };
     email: { label: string; error: string };
     product: { label: string; emptyOption: string };
+    /** Multi-select chips; options are edited in the CMS */
+    objectType: { label: string; options: string[] };
     notes: { label: string; placeholder: string };
   };
   submitLabel: string;

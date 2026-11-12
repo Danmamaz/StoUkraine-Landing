@@ -13,7 +13,7 @@ type Props = {
   products: Pick<Product, "id" | "name">[];
 };
 
-type Errors = Partial<Record<"name" | "phone" | "email", string>>;
+type Errors = Partial<Record<"firstName" | "lastName" | "phone" | "email", string>>;
 type Status = "idle" | "sending" | "success" | "error";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -53,13 +53,15 @@ function Field({
   );
 }
 
-/** Name*, phone* (+380 mask), e-mail, product, notes. «Купити» preselects the product. */
+/** First/last name*, phone* (+380 mask), e-mail, product, object type chips, notes. «Купити» preselects the product. */
 export default function LeadForm({ content: c, products }: Props) {
   const { product, setProduct, focusRequest } = useLeadForm();
   const uid = useId();
-  const ids = { name: `${uid}-name`, phone: `${uid}-phone`, email: `${uid}-email`, product: `${uid}-product`, notes: `${uid}-notes` };
+  const ids = { firstName: `${uid}-first-name`, lastName: `${uid}-last-name`, phone: `${uid}-phone`, email: `${uid}-email`, product: `${uid}-product`, notes: `${uid}-notes` };
 
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [objectTypes, setObjectTypes] = useState<string[]>([]);
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [notes, setNotes] = useState("");
@@ -78,7 +80,8 @@ export default function LeadForm({ content: c, products }: Props) {
 
   const validate = (): Errors => {
     const e: Errors = {};
-    if (name.trim().length < 2) e.name = c.fields.name.error;
+    if (firstName.trim().length < 2) e.firstName = c.fields.firstName.error;
+    if (lastName.trim().length < 2) e.lastName = c.fields.lastName.error;
     if (phoneDigits(phone).length !== 9) e.phone = c.fields.phone.error;
     if (email.trim() && !EMAIL_RE.test(email.trim())) e.email = c.fields.email.error;
     return e;
@@ -88,14 +91,14 @@ export default function LeadForm({ content: c, products }: Props) {
   useEffect(() => {
     if (touched) setErrors(validate());
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [name, phone, email, touched]);
+  }, [firstName, lastName, phone, email, touched]);
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setTouched(true);
     const found = validate();
     setErrors(found);
-    const firstInvalid = (["name", "phone", "email"] as const).find((k) => found[k]);
+    const firstInvalid = (["firstName", "lastName", "phone", "email"] as const).find((k) => found[k]);
     if (firstInvalid) {
       document.getElementById(ids[firstInvalid])?.focus();
       return;
@@ -104,10 +107,12 @@ export default function LeadForm({ content: c, products }: Props) {
     try {
       const productName = products.find((p) => p.id === product)?.name;
       const res = await submitLead({
-        name: name.trim(),
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
         phone: `+380${phoneDigits(phone)}`,
         email: email.trim() || undefined,
         product: productName,
+        objectTypes: objectTypes.length ? objectTypes : undefined,
         notes: notes.trim() || undefined,
         website,
       });
@@ -118,7 +123,9 @@ export default function LeadForm({ content: c, products }: Props) {
   };
 
   const reset = () => {
-    setName("");
+    setFirstName("");
+    setLastName("");
+    setObjectTypes([]);
     setPhone("");
     setEmail("");
     setNotes("");
@@ -148,19 +155,34 @@ export default function LeadForm({ content: c, products }: Props) {
     <form onSubmit={onSubmit} noValidate className="grid gap-5">
       <p className="text-small text-ink-muted">{c.requiredHint}</p>
 
-      <Field id={ids.name} label={c.fields.name.label} required error={errors.name}>
-        <input
-          ref={nameRef}
-          id={ids.name}
-          name="name"
-          autoComplete="name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          aria-invalid={!!errors.name}
-          aria-describedby={errors.name ? `${ids.name}-error` : undefined}
-          className={cn(inputClass, "h-12", border("name"))}
-        />
-      </Field>
+      <div className="grid gap-5 sm:grid-cols-2">
+        <Field id={ids.firstName} label={c.fields.firstName.label} required error={errors.firstName}>
+          <input
+            ref={nameRef}
+            id={ids.firstName}
+            name="firstName"
+            autoComplete="given-name"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            aria-invalid={!!errors.firstName}
+            aria-describedby={errors.firstName ? `${ids.firstName}-error` : undefined}
+            className={cn(inputClass, "h-12", border("firstName"))}
+          />
+        </Field>
+
+        <Field id={ids.lastName} label={c.fields.lastName.label} required error={errors.lastName}>
+          <input
+            id={ids.lastName}
+            name="lastName"
+            autoComplete="family-name"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+            aria-invalid={!!errors.lastName}
+            aria-describedby={errors.lastName ? `${ids.lastName}-error` : undefined}
+            className={cn(inputClass, "h-12", border("lastName"))}
+          />
+        </Field>
+      </div>
 
       <Field id={ids.phone} label={c.fields.phone.label} required error={errors.phone}>
         <input
@@ -213,6 +235,31 @@ export default function LeadForm({ content: c, products }: Props) {
           <ChevronDown size={18} aria-hidden className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-ink-soft" />
         </div>
       </Field>
+
+      <fieldset>
+        <legend className="mb-2.5 block text-[14px] font-semibold text-ink">
+          {c.fields.objectType.label} <span className="font-normal text-ink-muted">{c.optionalHint}</span>
+        </legend>
+        <div className="flex flex-wrap gap-2">
+          {c.fields.objectType.options.map((option) => {
+            const active = objectTypes.includes(option);
+            return (
+              <button
+                key={option}
+                type="button"
+                onClick={() => setObjectTypes((list) => (active ? list.filter((o) => o !== option) : [...list, option]))}
+                aria-pressed={active}
+                className={cn(
+                  "min-h-10 rounded-chip border px-4 text-[13.5px] font-medium transition-colors duration-150",
+                  active ? "border-ink bg-brand text-ink" : "border-line-strong bg-white text-ink-soft hover:border-ink hover:text-ink",
+                )}
+              >
+                {option}
+              </button>
+            );
+          })}
+        </div>
+      </fieldset>
 
       <Field id={ids.notes} label={c.fields.notes.label} optionalHint={c.optionalHint}>
         <textarea
