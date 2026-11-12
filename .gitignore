@@ -1,0 +1,30 @@
+# Private project context (client transcript, estimates) — never commit
+/_context/
+
+# Editor / local tool config
+.vscode/
+.claude/
+
+# dependencies
+/node_modules
+
+# next.js
+/.next/
+/out/
+/build
+
+# misc
+.DS_Store
+*.pem
+npm-debug.log*
+
+# local env files
+.env
+.env*.local
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
